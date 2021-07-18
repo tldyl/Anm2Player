@@ -202,7 +202,7 @@ public class AnimatedActor implements Disposable {
         }
     }
 
-    private static class Info {
+    public static class Info {
         String createdBy;
         String createdOn;
         int fps;
