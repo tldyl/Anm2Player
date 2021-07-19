@@ -49,7 +49,15 @@ public class AnimatedActor implements Disposable {
             Iterator<Element> spriteSheetsIt = spriteSheets.elementIterator();
             while (spriteSheetsIt.hasNext()) {
                 Element spriteSheet = spriteSheetsIt.next();
-                this.spriteSheets.put(spriteSheet.attributeValue("Id"), new Texture(spriteSheet.attributeValue("Path")));
+                String imgPath = spriteSheet.attributeValue("Path");
+                Texture img;
+                try {
+                    img = new Texture(imgPath);
+                } catch (Exception e) {
+                    imgPath = anm2Path.substring(0, anm2Path.lastIndexOf("/") + 1) + imgPath;
+                    img = new Texture(imgPath);
+                }
+                this.spriteSheets.put(spriteSheet.attributeValue("Id"), img);
             }
             Element layers = content.element("Layers");
             Iterator<Element> layersIt = layers.elementIterator();
@@ -160,11 +168,7 @@ public class AnimatedActor implements Disposable {
 
     public void setCurAnimation(String animationName) {
         this.curAnimation = this.animations.getOrDefault(animationName, null);
-        curAnimation.isDone = false;
-        curAnimation.xPosition = this.xPosition;
-        curAnimation.yPosition = this.yPosition;
-        curAnimation.frameCount = 0;
-        curAnimation.update();
+        curAnimation.init();
     }
 
     public void addTriggerEvent(String eventId, Consumer<Animation> event) {
@@ -259,6 +263,18 @@ public class AnimatedActor implements Disposable {
         float xPosition = 0;
         float yPosition = 0;
 
+        void init() {
+            isDone = false;
+            xPosition = AnimatedActor.this.xPosition;
+            yPosition = AnimatedActor.this.yPosition;
+            frameCount = 0;
+            for (LayerAnimation layerAnimation : layerAnimations) {
+                layerAnimation.currFrameIndex = 0;
+                layerAnimation.currDelay = 0;
+            }
+            update();
+        }
+
         void update() {
             if (!isDone) {
                 for (LayerAnimation layerAnimation : layerAnimations) {
@@ -276,6 +292,10 @@ public class AnimatedActor implements Disposable {
             if (frameCount >= frameNum) {
                 if (loop) {
                     frameCount = 0;
+                    for (LayerAnimation layerAnimation : layerAnimations) {
+                        layerAnimation.currFrameIndex = 0;
+                        layerAnimation.currDelay = 0;
+                    }
                 } else {
                     isDone = true;
                 }
@@ -301,6 +321,9 @@ public class AnimatedActor implements Disposable {
         float yPosition = 0;
 
         void update() {
+            if (currFrameIndex >= frames.size()) {
+                return;
+            }
             currFrame = frames.get(currFrameIndex).makeCopy();
             if (currFrame.interpolated) {
                 if (currFrameIndex < frames.size() - 1) {
@@ -315,12 +338,12 @@ public class AnimatedActor implements Disposable {
                 currFrameIndex++;
                 currDelay = 0;
             }
-            if (currFrameIndex >= frames.size()) {
-                currFrameIndex = 0;
-            }
         }
 
         void render(SpriteBatch sb) {
+            if (currFrameIndex >= frames.size()) {
+                return;
+            }
             if (currFrame != null) {
                 sb.setColor(currFrame.tint);
                 float scaleX = (currFrame.xScale / 100.0F) * AnimatedActor.this.scale;
@@ -345,19 +368,19 @@ public class AnimatedActor implements Disposable {
         }
 
         private void applyInterpolation(Frame nextFrame) {
-            currFrame.xPosition = Interpolation.exp10In.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPosition = Interpolation.exp10In.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.xPivot = (int) Interpolation.exp10In.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPivot = (int) Interpolation.exp10In.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.width = (int) Interpolation.exp10In.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
-            currFrame.height = (int) Interpolation.exp10In.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
-            currFrame.xScale = (int) Interpolation.exp10In.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.yScale = (int) Interpolation.exp10In.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.r = (int) Interpolation.exp10In.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.g = (int) Interpolation.exp10In.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.b = (int) Interpolation.exp10In.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.a = (int) Interpolation.exp10In.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
-            currFrame.rotation = (int) Interpolation.exp10In.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPosition = Interpolation.exp5Out.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPosition = Interpolation.exp5Out.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPivot = (int) Interpolation.exp5Out.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPivot = (int) Interpolation.exp5Out.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.width = (int) Interpolation.exp5Out.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
+            currFrame.height = (int) Interpolation.exp5Out.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
+            currFrame.xScale = (int) Interpolation.exp5Out.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.yScale = (int) Interpolation.exp5Out.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.r = (int) Interpolation.exp5Out.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.g = (int) Interpolation.exp5Out.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.b = (int) Interpolation.exp5Out.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.a = (int) Interpolation.exp5Out.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
+            currFrame.rotation = (int) Interpolation.exp5Out.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
         }
     }
 
