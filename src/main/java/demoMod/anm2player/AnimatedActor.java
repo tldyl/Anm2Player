@@ -344,7 +344,7 @@ public class AnimatedActor implements Disposable {
             if (currFrameIndex >= frames.size()) {
                 return;
             }
-            if (currFrame != null) {
+            if (currFrame != null && currFrame.visible) {
                 sb.setColor(currFrame.tint);
                 float scaleX = (currFrame.xScale / 100.0F) * AnimatedActor.this.scale;
                 float scaleY = (currFrame.yScale / 100.0F) * AnimatedActor.this.scale;
