@@ -53,4 +53,4 @@ Used to play .anm2 files from The Binding of Isaac.
     
 ## 示例工程
 
-看[这里](https://github.com/tldyl/isaac-mod-extend/blob/master/src/main/java/isaacModExtend/monsters/BabyPlum.java)
+看[这里](https://github.com/tldyl/isaac-mod-extend/blob/master/src/main/java/isaacModExtend/monsters/Siren.java)
