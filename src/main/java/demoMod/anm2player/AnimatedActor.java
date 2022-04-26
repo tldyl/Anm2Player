@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.utils.Disposable;
+import com.megacrit.cardcrawl.core.Settings;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -24,6 +25,7 @@ public class AnimatedActor implements Disposable {
     private float frameTimer = 0.0F;
     public float xPosition;
     public float yPosition;
+    public float alpha = 255.0F;
     public boolean flipX = false;
     public boolean flipY = false;
     public float scale = 1.0F;
@@ -98,8 +100,8 @@ public class AnimatedActor implements Disposable {
                         Frame frame = new Frame();
                         frame.xPosition = Float.parseFloat(frameElement.attributeValue("XPosition"));
                         frame.yPosition = Float.parseFloat(frameElement.attributeValue("YPosition"));
-                        frame.xPivot = Integer.parseInt(frameElement.attributeValue("XPivot"));
-                        frame.yPivot = Integer.parseInt(frameElement.attributeValue("YPivot"));
+                        frame.xPivot = Float.parseFloat(frameElement.attributeValue("XPivot"));
+                        frame.yPivot = Float.parseFloat(frameElement.attributeValue("YPivot"));
                         frame.xCrop = Integer.parseInt(frameElement.attributeValue("XCrop"));
                         frame.yCrop = Integer.parseInt(frameElement.attributeValue("YCrop"));
                         frame.width = Integer.parseInt(frameElement.attributeValue("Width"));
@@ -119,7 +121,7 @@ public class AnimatedActor implements Disposable {
                         colorOffset.g = Float.parseFloat(frameElement.attributeValue("GreenOffset")) / 255.0F;
                         colorOffset.b = Float.parseFloat(frameElement.attributeValue("BlueOffset")) / 255.0F;
                         frame.colorOffset = colorOffset;
-                        frame.rotation = Integer.parseInt(frameElement.attributeValue("Rotation"));
+                        frame.rotation = Float.parseFloat(frameElement.attributeValue("Rotation"));
                         if (frameElement.attributeValue("Interpolated") != null) {
                             frame.interpolated = Boolean.parseBoolean(frameElement.attributeValue("Interpolated"));
                         } else {
@@ -216,8 +218,8 @@ public class AnimatedActor implements Disposable {
     private static class Frame {
         float xPosition;
         float yPosition;
-        int xPivot;
-        int yPivot;
+        float xPivot;
+        float yPivot;
         int xCrop;
         int yCrop;
         int width;
@@ -228,7 +230,7 @@ public class AnimatedActor implements Disposable {
         boolean visible;
         Color tint;
         Color colorOffset;
-        int rotation;
+        float rotation;
         boolean interpolated;
 
         Frame makeCopy() {
@@ -345,42 +347,42 @@ public class AnimatedActor implements Disposable {
                 return;
             }
             if (currFrame != null && currFrame.visible) {
+                currFrame.tint.a *= alpha / 255.0F;
                 sb.setColor(currFrame.tint);
-                float scaleX = (currFrame.xScale / 100.0F) * AnimatedActor.this.scale;
-                float scaleY = (currFrame.yScale / 100.0F) * AnimatedActor.this.scale;
+                currFrame.tint.a /= alpha / 255.0F;
                 sb.draw(AnimatedActor.this.spriteSheets.get(spriteSheetId),
-                        xPosition + currFrame.xPosition * scaleX,
-                        yPosition - currFrame.yPosition * scaleY,
+                        xPosition + (AnimatedActor.this.flipX ? -1.0F : 1.0F) * Settings.scale * (currFrame.xPosition) * Settings.scale - currFrame.xPivot,
+                        yPosition - (AnimatedActor.this.flipY ? -1.0F : 1.0F) * (currFrame.yPosition) * Settings.scale - (currFrame.height - currFrame.yPivot),
                         currFrame.xPivot,
-                        currFrame.yPivot,
+                        currFrame.height - currFrame.yPivot,
                         currFrame.width,
                         currFrame.height,
-                        scaleX,
-                        scaleY,
-                        currFrame.rotation,
+                        (AnimatedActor.this.flipX ? -1.0F : 1.0F) * Settings.scale * AnimatedActor.this.scale * currFrame.xScale / 100.0F,
+                        (AnimatedActor.this.flipY ? -1.0F : 1.0F) * Settings.scale * AnimatedActor.this.scale * currFrame.yScale / 100.0F,
+                        (AnimatedActor.this.flipX == AnimatedActor.this.flipY ? -1.0F : 1.0F) * currFrame.rotation,
                         currFrame.xCrop,
                         currFrame.yCrop,
                         currFrame.width,
                         currFrame.height,
-                        AnimatedActor.this.flipX, AnimatedActor.this.flipY
+                        false, false
                 );
             }
         }
 
         private void applyInterpolation(Frame nextFrame) {
-            currFrame.xPosition = Interpolation.exp5Out.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPosition = Interpolation.exp5Out.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.xPivot = (int) Interpolation.exp5Out.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPivot = (int) Interpolation.exp5Out.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.width = (int) Interpolation.exp5Out.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
-            currFrame.height = (int) Interpolation.exp5Out.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
-            currFrame.xScale = (int) Interpolation.exp5Out.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.yScale = (int) Interpolation.exp5Out.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.r = (int) Interpolation.exp5Out.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.g = (int) Interpolation.exp5Out.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.b = (int) Interpolation.exp5Out.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.a = (int) Interpolation.exp5Out.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
-            currFrame.rotation = (int) Interpolation.exp5Out.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPosition = Interpolation.sine.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPosition = Interpolation.sine.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPivot = (int) Interpolation.sine.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPivot = (int) Interpolation.sine.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.width = (int) Interpolation.sine.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
+            currFrame.height = (int) Interpolation.sine.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
+            currFrame.xScale = Interpolation.sine.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.yScale = Interpolation.sine.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.r = Interpolation.sine.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.g = Interpolation.sine.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.b = Interpolation.sine.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.a = Interpolation.sine.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
+            currFrame.rotation = Interpolation.sine.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
         }
     }
 
