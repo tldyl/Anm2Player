@@ -209,10 +209,10 @@ public class AnimatedActor implements Disposable {
     }
 
     public static class Info {
-        String createdBy;
-        String createdOn;
-        int fps;
-        String version;
+        public String createdBy;
+        public String createdOn;
+        public int fps;
+        public String version;
     }
 
     private static class Frame {
@@ -351,8 +351,8 @@ public class AnimatedActor implements Disposable {
                 sb.setColor(currFrame.tint);
                 currFrame.tint.a /= alpha / 255.0F;
                 sb.draw(AnimatedActor.this.spriteSheets.get(spriteSheetId),
-                        xPosition + (AnimatedActor.this.flipX ? -1.0F : 1.0F) * Settings.scale * (currFrame.xPosition) * Settings.scale - currFrame.xPivot,
-                        yPosition - (AnimatedActor.this.flipY ? -1.0F : 1.0F) * (currFrame.yPosition) * Settings.scale - (currFrame.height - currFrame.yPivot),
+                        xPosition + (AnimatedActor.this.flipX ? -1.0F : 1.0F) * currFrame.xPosition * AnimatedActor.this.scale * Settings.scale - currFrame.xPivot,
+                        yPosition - (AnimatedActor.this.flipY ? -1.0F : 1.0F) * currFrame.yPosition * AnimatedActor.this.scale * Settings.scale - (currFrame.height - currFrame.yPivot),
                         currFrame.xPivot,
                         currFrame.height - currFrame.yPivot,
                         currFrame.width,
