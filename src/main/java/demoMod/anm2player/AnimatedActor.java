@@ -25,6 +25,7 @@ public class AnimatedActor implements Disposable {
     private float frameTimer = 0.0F;
     public float xPosition;
     public float yPosition;
+    public float rotation = 0.0F;
     public float alpha = 255.0F;
     public boolean flipX = false;
     public boolean flipY = false;
@@ -359,7 +360,7 @@ public class AnimatedActor implements Disposable {
                         currFrame.height,
                         (AnimatedActor.this.flipX ? -1.0F : 1.0F) * Settings.scale * AnimatedActor.this.scale * currFrame.xScale / 100.0F,
                         (AnimatedActor.this.flipY ? -1.0F : 1.0F) * Settings.scale * AnimatedActor.this.scale * currFrame.yScale / 100.0F,
-                        (AnimatedActor.this.flipX == AnimatedActor.this.flipY ? -1.0F : 1.0F) * currFrame.rotation,
+                        (AnimatedActor.this.flipX == AnimatedActor.this.flipY ? -1.0F : 1.0F) * (currFrame.rotation + AnimatedActor.this.rotation),
                         currFrame.xCrop,
                         currFrame.yCrop,
                         currFrame.width,
