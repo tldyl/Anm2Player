@@ -134,6 +134,51 @@ public class AnimatedActor implements Disposable {
                     layerAnimationList.add(layerAnimation);
                 }
                 animation.layerAnimations = layerAnimationList;
+
+                List<NullAnimation> nullAnimationList = new ArrayList<>();
+                Element nullAnimations = animationElement.element("NullAnimations");
+                Iterator<Element> nullAnimationsIt = nullAnimations.elementIterator();
+                while (nullAnimationsIt.hasNext()) {
+                    Element nullAnimationElement = nullAnimationsIt.next();
+                    NullAnimation nullAnimation = new NullAnimation();
+                    nullAnimation.id = nullAnimationElement.attributeValue("NullId");
+                    nullAnimation.visible = Boolean.parseBoolean(nullAnimationElement.attributeValue("Visible"));
+                    List<Frame> frames = new ArrayList<>();
+                    Iterator<Element> layerAnimationIt = nullAnimationElement.elementIterator();
+                    while (layerAnimationIt.hasNext()) {
+                        Element frameElement = layerAnimationIt.next();
+                        Frame frame = new Frame();
+                        frame.xPosition = Float.parseFloat(frameElement.attributeValue("XPosition"));
+                        frame.yPosition = Float.parseFloat(frameElement.attributeValue("YPosition"));
+
+                        frame.xScale = Float.parseFloat(frameElement.attributeValue("XScale"));
+                        frame.yScale = Float.parseFloat(frameElement.attributeValue("YScale"));
+                        frame.delay = Integer.parseInt(frameElement.attributeValue("Delay"));
+                        frame.visible = Boolean.parseBoolean(frameElement.attributeValue("Visible"));
+                        Color tint = new Color();
+                        tint.r = Float.parseFloat(frameElement.attributeValue("RedTint")) / 255.0F;
+                        tint.g = Float.parseFloat(frameElement.attributeValue("GreenTint")) / 255.0F;
+                        tint.b = Float.parseFloat(frameElement.attributeValue("BlueTint")) / 255.0F;
+                        tint.a = Float.parseFloat(frameElement.attributeValue("AlphaTint")) / 255.0F;
+                        frame.tint = tint;
+                        Color colorOffset = new Color();
+                        colorOffset.r = Float.parseFloat(frameElement.attributeValue("RedOffset")) / 255.0F;
+                        colorOffset.g = Float.parseFloat(frameElement.attributeValue("GreenOffset")) / 255.0F;
+                        colorOffset.b = Float.parseFloat(frameElement.attributeValue("BlueOffset")) / 255.0F;
+                        frame.colorOffset = colorOffset;
+                        frame.rotation = Float.parseFloat(frameElement.attributeValue("Rotation"));
+                        if (frameElement.attributeValue("Interpolated") != null) {
+                            frame.interpolated = Boolean.parseBoolean(frameElement.attributeValue("Interpolated"));
+                        } else {
+                            frame.interpolated = false;
+                        }
+                        frames.add(frame);
+                    }
+                    nullAnimation.frames = frames;
+                    nullAnimationList.add(nullAnimation);
+                }
+                animation.nullAnimations = nullAnimationList;
+
                 animation.triggers = new ArrayList<>();
                 Iterator<Element> triggersIt = animationElement.element("Triggers").elementIterator();
                 while (triggersIt.hasNext()) {
@@ -159,6 +204,9 @@ public class AnimatedActor implements Disposable {
             if (curAnimation != null) {
                 for (LayerAnimation layerAnimation : curAnimation.layerAnimations) {
                     layerAnimation.currDelay++;
+                }
+                for (NullAnimation nullAnimation : curAnimation.nullAnimations) {
+                    nullAnimation.currDelay++;
                 }
             }
             frameTimer = 0;
@@ -193,6 +241,10 @@ public class AnimatedActor implements Disposable {
         return curAnimation == animation;
     }
 
+    public Animation getCurAnimation() {
+        return this.curAnimation;
+    }
+
     public String getCurAnimationName() {
         for (Map.Entry<String, Animation> e : this.animations.entrySet()) {
             if (e.getValue() == curAnimation) {
@@ -216,23 +268,23 @@ public class AnimatedActor implements Disposable {
         public String version;
     }
 
-    private static class Frame {
-        float xPosition;
-        float yPosition;
-        float xPivot;
-        float yPivot;
-        int xCrop;
-        int yCrop;
-        int width;
-        int height;
-        float xScale;
-        float yScale;
-        int delay;
-        boolean visible;
-        Color tint;
-        Color colorOffset;
-        float rotation;
-        boolean interpolated;
+    public static class Frame {
+        public float xPosition;
+        public float yPosition;
+        public float xPivot;
+        public float yPivot;
+        public int xCrop;
+        public int yCrop;
+        public int width;
+        public int height;
+        public float xScale;
+        public float yScale;
+        public int delay;
+        public boolean visible;
+        public Color tint;
+        public Color colorOffset;
+        public float rotation;
+        public boolean interpolated;
 
         Frame makeCopy() {
             Frame ret = new Frame();
@@ -260,6 +312,7 @@ public class AnimatedActor implements Disposable {
         int frameNum;
         int frameCount = 0;
         List<LayerAnimation> layerAnimations;
+        List<NullAnimation> nullAnimations;
         boolean loop;
         List<Trigger> triggers;
         boolean isDone = false;
@@ -275,6 +328,10 @@ public class AnimatedActor implements Disposable {
                 layerAnimation.currFrameIndex = 0;
                 layerAnimation.currDelay = 0;
             }
+            for (NullAnimation nullAnimation : nullAnimations) {
+                nullAnimation.currFrameIndex = 0;
+                nullAnimation.currDelay = 0;
+            }
             update();
         }
 
@@ -284,6 +341,11 @@ public class AnimatedActor implements Disposable {
                     layerAnimation.xPosition = this.xPosition;
                     layerAnimation.yPosition = this.yPosition;
                     layerAnimation.update();
+                }
+                for (NullAnimation nullAnimation : nullAnimations) {
+                    nullAnimation.xPosition = this.xPosition;
+                    nullAnimation.yPosition = this.yPosition;
+                    nullAnimation.update();
                 }
             }
             for (Trigger trigger : triggers) {
@@ -299,6 +361,10 @@ public class AnimatedActor implements Disposable {
                         layerAnimation.currFrameIndex = 0;
                         layerAnimation.currDelay = 0;
                     }
+                    for (NullAnimation nullAnimation : nullAnimations) {
+                        nullAnimation.currFrameIndex = 0;
+                        nullAnimation.currDelay = 0;
+                    }
                 } else {
                     isDone = true;
                 }
@@ -309,6 +375,38 @@ public class AnimatedActor implements Disposable {
             for (LayerAnimation layerAnimation : layerAnimations) {
                 layerAnimation.render(sb);
             }
+        }
+
+        public NullAnimation getNullAnimation(String nullId) {
+            for (NullAnimation nullAnimation : nullAnimations) {
+                if (nullAnimation.id.equals(nullId)) {
+                    return nullAnimation;
+                }
+            }
+            return null;
+        }
+
+        public boolean isLoop() {
+            return this.loop;
+        }
+    }
+
+    public class NullAnimation extends LayerAnimation {
+        @Override
+        void render(SpriteBatch sb) {
+
+        }
+
+        public float getAbsoluteX() {
+            return xPosition + currFrame.xPosition * AnimatedActor.this.scale * Settings.scale;
+        }
+
+        public float getAbsoluteY() {
+            return yPosition - currFrame.yPosition * AnimatedActor.this.scale * Settings.scale;
+        }
+
+        public Frame getCurrFrame() {
+            return this.currFrame;
         }
     }
 
@@ -324,7 +422,7 @@ public class AnimatedActor implements Disposable {
         float yPosition = 0;
 
         void update() {
-            if (currFrameIndex >= frames.size()) {
+            if (currFrameIndex >= frames.size() || !visible) {
                 return;
             }
             currFrame = frames.get(currFrameIndex).makeCopy();
@@ -370,7 +468,7 @@ public class AnimatedActor implements Disposable {
             }
         }
 
-        private void applyInterpolation(Frame nextFrame) {
+        void applyInterpolation(Frame nextFrame) {
             currFrame.xPosition = Interpolation.sine.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
             currFrame.yPosition = Interpolation.sine.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
             currFrame.xPivot = (int) Interpolation.sine.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
@@ -384,6 +482,10 @@ public class AnimatedActor implements Disposable {
             currFrame.tint.b = Interpolation.sine.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
             currFrame.tint.a = Interpolation.sine.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
             currFrame.rotation = Interpolation.sine.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
+        }
+
+        public boolean isVisible() {
+            return this.visible;
         }
     }
 
