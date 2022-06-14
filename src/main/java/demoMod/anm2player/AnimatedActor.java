@@ -386,6 +386,15 @@ public class AnimatedActor implements Disposable {
             return null;
         }
 
+        public LayerAnimation getLayerAnimation(String layerId) {
+            for (LayerAnimation layerAnimation : layerAnimations) {
+                if (layerAnimation.id.equals(layerId)) {
+                    return layerAnimation;
+                }
+            }
+            return null;
+        }
+
         public boolean isLoop() {
             return this.loop;
         }
@@ -410,7 +419,7 @@ public class AnimatedActor implements Disposable {
         }
     }
 
-    private class LayerAnimation {
+    public class LayerAnimation {
         String id;
         boolean visible;
         List<Frame> frames;
@@ -420,6 +429,7 @@ public class AnimatedActor implements Disposable {
         String spriteSheetId;
         float xPosition = 0;
         float yPosition = 0;
+        Interpolation interMode = Interpolation.linear;
 
         void update() {
             if (currFrameIndex >= frames.size() || !visible) {
@@ -469,23 +479,31 @@ public class AnimatedActor implements Disposable {
         }
 
         void applyInterpolation(Frame nextFrame) {
-            currFrame.xPosition = Interpolation.sine.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPosition = Interpolation.sine.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.xPivot = (int) Interpolation.sine.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPivot = (int) Interpolation.sine.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.width = (int) Interpolation.sine.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
-            currFrame.height = (int) Interpolation.sine.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
-            currFrame.xScale = Interpolation.sine.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.yScale = Interpolation.sine.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.r = Interpolation.sine.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.g = Interpolation.sine.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.b = Interpolation.sine.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.a = Interpolation.sine.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
-            currFrame.rotation = Interpolation.sine.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPosition = interMode.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPosition = interMode.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPivot = (int) interMode.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.yPivot = (int) interMode.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
+            currFrame.width = (int) interMode.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
+            currFrame.height = (int) interMode.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
+            currFrame.xScale = interMode.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.yScale = interMode.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.r = interMode.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.g = interMode.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.b = interMode.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
+            currFrame.tint.a = interMode.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
+            currFrame.rotation = interMode.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
         }
 
         public boolean isVisible() {
             return this.visible;
+        }
+
+        public Interpolation getInterMode() {
+            return interMode;
+        }
+
+        public void setInterMode(Interpolation interMode) {
+            this.interMode = interMode;
         }
     }
 

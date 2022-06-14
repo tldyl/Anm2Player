@@ -50,7 +50,19 @@ Used to play .anm2 files from The Binding of Isaac.
 ### 渲染
 
     animation.render(spriteBatch);
-    
+
+### 获得当前正在播放的动画
+
+    animation.getCurAnimation();
+
+### 获得当前正在播放的动画的指定图层对象
+
+    animation.getCurAnimation().getLayerAnimation("图层id");
+
+### 获得当前正在播放的动画的指定空对象
+
+    animation.getCurAnimation().getNullAnimation("空对象id");
+
 ## 示例工程
 
 看[这里](https://github.com/tldyl/isaac-mod-extend/blob/master/src/main/java/isaacModExtend/monsters/Siren.java)
