@@ -31,7 +31,7 @@ Used to play .anm2 files from The Binding of Isaac.
 
     animation.isCurAnimationDone();
   
-### 指定动画是否为当前播放的动画(暂时无用)
+### 指定动画是否为当前播放的动画
 
     animation.isCurAnimation(animation.Animation);
   
