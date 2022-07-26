@@ -17,10 +17,10 @@ import java.util.function.Consumer;
 
 public class AnimatedActor implements Disposable {
     private Info info;
-    private Map<String, Texture> spriteSheets = new HashMap<>();
-    private List<Event> events = new ArrayList<>();
-    private Map<String, Animation> animations = new HashMap<>();
-    private Map<String, Consumer<Animation>> triggerEvent = new HashMap<>();
+    private final Map<String, Texture> spriteSheets = new HashMap<>();
+    private final List<Event> events = new ArrayList<>();
+    private final Map<String, Animation> animations = new HashMap<>();
+    private final Map<String, Consumer<Animation>> triggerEvent = new HashMap<>();
     private Animation curAnimation;
     private float frameTimer = 0.0F;
     public float xPosition;
@@ -195,21 +195,15 @@ public class AnimatedActor implements Disposable {
 
     public void update() {
         frameTimer += Gdx.graphics.getDeltaTime();
-        if (curAnimation != null && frameTimer >= 1.0F / (float) this.info.fps && !curAnimation.isDone) {
+        if (curAnimation != null && !curAnimation.isDone) {
             curAnimation.xPosition = this.xPosition;
             curAnimation.yPosition = this.yPosition;
             curAnimation.update();
         }
-        if (frameTimer >= 1.0F / (float) this.info.fps) {
-            if (curAnimation != null) {
-                for (LayerAnimation layerAnimation : curAnimation.layerAnimations) {
-                    layerAnimation.currDelay++;
-                }
-                for (NullAnimation nullAnimation : curAnimation.nullAnimations) {
-                    nullAnimation.currDelay++;
-                }
+        if (curAnimation != null) {
+            if (frameTimer >= (1.0F / info.fps)) {
+                frameTimer = 0;
             }
-            frameTimer = 0;
         }
     }
 
@@ -249,6 +243,19 @@ public class AnimatedActor implements Disposable {
         for (Map.Entry<String, Animation> e : this.animations.entrySet()) {
             if (e.getValue() == curAnimation) {
                 return e.getKey();
+            }
+        }
+        return null;
+    }
+
+    public List<Event> getEvents() {
+        return this.events;
+    }
+
+    public String getEventIdByName(String eventName) {
+        for (Event event : this.events) {
+            if (event.name.equals(eventName)) {
+                return event.id;
             }
         }
         return null;
@@ -311,6 +318,7 @@ public class AnimatedActor implements Disposable {
     public class Animation {
         int frameNum;
         int frameCount = 0;
+        float playTime = 0;
         List<LayerAnimation> layerAnimations;
         List<NullAnimation> nullAnimations;
         boolean loop;
@@ -332,7 +340,6 @@ public class AnimatedActor implements Disposable {
                 nullAnimation.currFrameIndex = 0;
                 nullAnimation.currDelay = 0;
             }
-            update();
         }
 
         void update() {
@@ -348,12 +355,14 @@ public class AnimatedActor implements Disposable {
                     nullAnimation.update();
                 }
             }
+            playTime += Gdx.graphics.getDeltaTime();
+            frameCount = (int) (playTime * info.fps);
             for (Trigger trigger : triggers) {
-                if (trigger.atFrame == frameCount) {
+                if (frameCount >= trigger.atFrame && !trigger.triggered) {
                     AnimatedActor.this.triggerEvent.get(trigger.eventId).accept(this);
+                    trigger.triggered = true;
                 }
             }
-            frameCount++;
             if (frameCount >= frameNum) {
                 if (loop) {
                     frameCount = 0;
@@ -367,6 +376,10 @@ public class AnimatedActor implements Disposable {
                     }
                 } else {
                     isDone = true;
+                }
+                playTime = 0;
+                for (Trigger trigger : triggers) {
+                    trigger.triggered = false;
                 }
             }
         }
@@ -426,6 +439,7 @@ public class AnimatedActor implements Disposable {
         Frame currFrame;
         int currFrameIndex = 0;
         int currDelay = 0;
+        float currTimer = 0;
         String spriteSheetId;
         float xPosition = 0;
         float yPosition = 0;
@@ -445,9 +459,17 @@ public class AnimatedActor implements Disposable {
                     applyInterpolation(nextFrame);
                 }
             }
+            float t = frameTimer;
+            while (t >= (1.0F / info.fps)) {
+                currDelay++;
+                t -= 1.0F / info.fps;
+            }
             if (currDelay >= currFrame.delay) {
                 currFrameIndex++;
                 currDelay = 0;
+                currTimer = 0;
+            } else {
+                currTimer += Gdx.graphics.getDeltaTime();
             }
         }
 
@@ -479,19 +501,19 @@ public class AnimatedActor implements Disposable {
         }
 
         void applyInterpolation(Frame nextFrame) {
-            currFrame.xPosition = interMode.apply(currFrame.xPosition, nextFrame.xPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPosition = interMode.apply(currFrame.yPosition, nextFrame.yPosition, (float) currDelay / (float) currFrame.delay);
-            currFrame.xPivot = (int) interMode.apply(currFrame.xPivot, nextFrame.xPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.yPivot = (int) interMode.apply(currFrame.yPivot, nextFrame.yPivot, (float) currDelay / (float) currFrame.delay);
-            currFrame.width = (int) interMode.apply(currFrame.width, nextFrame.width, (float) currDelay / (float) currFrame.delay);
-            currFrame.height = (int) interMode.apply(currFrame.height, nextFrame.height, (float) currDelay / (float) currFrame.delay);
-            currFrame.xScale = interMode.apply(currFrame.xScale, nextFrame.xScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.yScale = interMode.apply(currFrame.yScale, nextFrame.yScale, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.r = interMode.apply(currFrame.tint.r, nextFrame.tint.r, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.g = interMode.apply(currFrame.tint.g, nextFrame.tint.g, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.b = interMode.apply(currFrame.tint.b, nextFrame.tint.b, (float) currDelay / (float) currFrame.delay);
-            currFrame.tint.a = interMode.apply(currFrame.tint.a, nextFrame.tint.a, (float) currDelay / (float) currFrame.delay);
-            currFrame.rotation = interMode.apply(currFrame.rotation, nextFrame.rotation, (float) currDelay / (float) currFrame.delay);
+            currFrame.xPosition = interMode.apply(currFrame.xPosition, nextFrame.xPosition, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.yPosition = interMode.apply(currFrame.yPosition, nextFrame.yPosition, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.xPivot = (int) interMode.apply(currFrame.xPivot, nextFrame.xPivot, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.yPivot = (int) interMode.apply(currFrame.yPivot, nextFrame.yPivot, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.width = (int) interMode.apply(currFrame.width, nextFrame.width, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.height = (int) interMode.apply(currFrame.height, nextFrame.height, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.xScale = interMode.apply(currFrame.xScale, nextFrame.xScale, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.yScale = interMode.apply(currFrame.yScale, nextFrame.yScale, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.tint.r = interMode.apply(currFrame.tint.r, nextFrame.tint.r, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.tint.g = interMode.apply(currFrame.tint.g, nextFrame.tint.g, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.tint.b = interMode.apply(currFrame.tint.b, nextFrame.tint.b, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.tint.a = interMode.apply(currFrame.tint.a, nextFrame.tint.a, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
+            currFrame.rotation = interMode.apply(currFrame.rotation, nextFrame.rotation, currTimer / ((float) currFrame.delay * (1.0F / info.fps)));
         }
 
         public boolean isVisible() {
@@ -515,5 +537,6 @@ public class AnimatedActor implements Disposable {
     private static class Trigger {
         String eventId;
         int atFrame;
+        boolean triggered = false;
     }
 }
