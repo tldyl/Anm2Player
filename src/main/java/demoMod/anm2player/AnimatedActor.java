@@ -473,13 +473,13 @@ public class AnimatedActor implements Disposable {
             }
             if (currTimer >= (float) currFrame.delay / (float) info.fps) {
                 currFrameIndex++;
-                if (currFrameIndex >= frames.size()) {
-                    isDone = true;
-                    currFrameIndex--;
-                }
                 currTimer = 0;
             } else {
                 currTimer += Gdx.graphics.getDeltaTime();
+            }
+            if (currFrameIndex >= frames.size()) {
+                isDone = true;
+                currFrameIndex--;
             }
         }
 
