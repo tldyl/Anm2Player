@@ -540,9 +540,17 @@ public class AnimatedActor implements Disposable {
         }
     }
 
-    private static class Event {
+    public static class Event {
         String id;
         String name;
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     private static class Trigger {
