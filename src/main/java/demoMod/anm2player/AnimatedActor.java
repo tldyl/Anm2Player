@@ -150,7 +150,12 @@ public class AnimatedActor implements Disposable {
                         Frame frame = new Frame();
                         frame.xPosition = Float.parseFloat(frameElement.attributeValue("XPosition"));
                         frame.yPosition = Float.parseFloat(frameElement.attributeValue("YPosition"));
-
+                        frame.xPivot = Float.parseFloat(frameElement.attributeValue("XPivot"));
+                        frame.yPivot = Float.parseFloat(frameElement.attributeValue("YPivot"));
+                        frame.xCrop = Integer.parseInt(frameElement.attributeValue("XCrop"));
+                        frame.yCrop = Integer.parseInt(frameElement.attributeValue("YCrop"));
+                        frame.width = Integer.parseInt(frameElement.attributeValue("Width"));
+                        frame.height = Integer.parseInt(frameElement.attributeValue("Height"));
                         frame.xScale = Float.parseFloat(frameElement.attributeValue("XScale"));
                         frame.yScale = Float.parseFloat(frameElement.attributeValue("YScale"));
                         frame.delay = Integer.parseInt(frameElement.attributeValue("Delay"));
