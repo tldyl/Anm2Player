@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.utils.Disposable;
 import com.megacrit.cardcrawl.core.Settings;
@@ -434,10 +435,6 @@ public class AnimatedActor implements Disposable {
         public float getAbsoluteY() {
             return yPosition - currFrame.yPosition * AnimatedActor.this.scale * Settings.scale;
         }
-
-        public Frame getCurrFrame() {
-            return this.currFrame;
-        }
     }
 
     /**
@@ -455,6 +452,8 @@ public class AnimatedActor implements Disposable {
         float yPosition = 0;
         boolean isDone = false;
         Interpolation interMode = Interpolation.linear;
+        ShaderProgram shaderProgram;
+        Consumer<ShaderProgram> preRenderAction;
 
         void update() {
             if (currFrameIndex < 0 || currFrameIndex >= frames.size() || !visible) {
@@ -492,6 +491,13 @@ public class AnimatedActor implements Disposable {
                 currFrame.tint.a *= alpha / 255.0F;
                 sb.setColor(currFrame.tint);
                 currFrame.tint.a /= alpha / 255.0F;
+                ShaderProgram currShader = sb.getShader();
+                if (shaderProgram != null) {
+                    sb.setShader(shaderProgram);
+                    if (preRenderAction != null) {
+                        preRenderAction.accept(shaderProgram);
+                    }
+                }
                 sb.draw(AnimatedActor.this.spriteSheets.get(spriteSheetId),
                         xPosition + (AnimatedActor.this.flipX ? -1.0F : 1.0F) * currFrame.xPosition * AnimatedActor.this.scale * Settings.scale - currFrame.xPivot,
                         yPosition - (AnimatedActor.this.flipY ? -1.0F : 1.0F) * currFrame.yPosition * AnimatedActor.this.scale * Settings.scale - (currFrame.height - currFrame.yPivot),
@@ -508,6 +514,9 @@ public class AnimatedActor implements Disposable {
                         currFrame.height,
                         false, false
                 );
+                if (shaderProgram != null) {
+                    sb.setShader(currShader);
+                }
             }
         }
 
@@ -537,6 +546,22 @@ public class AnimatedActor implements Disposable {
 
         public void setInterMode(Interpolation interMode) {
             this.interMode = interMode;
+        }
+
+        public void setShaderProgram(ShaderProgram shaderProgram) {
+            this.shaderProgram = shaderProgram;
+        }
+
+        public void setPreRenderAction(Consumer<ShaderProgram> preRenderAction) {
+            this.preRenderAction = preRenderAction;
+        }
+
+        public Texture getSpriteSheet() {
+            return AnimatedActor.this.spriteSheets.get(spriteSheetId);
+        }
+
+        public Frame getCurrFrame() {
+            return this.currFrame;
         }
     }
 
