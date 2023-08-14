@@ -379,19 +379,27 @@ public class AnimatedActor implements Disposable {
                 isDone = isDone && nullAnimation.isDone;
             }
             playTime += Gdx.graphics.getDeltaTime();
-            for (Trigger trigger : triggers) {
-                if (playTime * info.fps > trigger.atFrame && !trigger.triggered) {
-                    AnimatedActor.this.triggerEvent.get(trigger.eventId).accept(this);
-                    trigger.triggered = true;
-                }
-            }
-
-            if (loop && isDone) {
+            try {
                 for (Trigger trigger : triggers) {
-                    if (!trigger.triggered) {
+                    if (playTime * info.fps > trigger.atFrame && !trigger.triggered) {
                         AnimatedActor.this.triggerEvent.get(trigger.eventId).accept(this);
                         trigger.triggered = true;
                     }
+                }
+            } catch (NullPointerException ignored) {
+                System.out.println("[Anm2Player] Missing trigger.");
+            }
+
+            if (loop && isDone) {
+                try {
+                    for (Trigger trigger : triggers) {
+                        if (!trigger.triggered) {
+                            AnimatedActor.this.triggerEvent.get(trigger.eventId).accept(this);
+                            trigger.triggered = true;
+                        }
+                    }
+                } catch (NullPointerException ignored) {
+                    System.out.println("[Anm2Player] Missing trigger.");
                 }
                 init();
             }
