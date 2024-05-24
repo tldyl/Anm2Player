@@ -3,6 +3,6 @@
   "name": "Anm2 Player",
   "author_list": ["Temple9"],
   "description": "以撒扩展mod所需的anm2动画播放器，可以播放以撒中的动画文件(.anm2)。",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "dependencies": []
 }

@@ -2,6 +2,7 @@ package demoMod.anm2player;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
@@ -469,6 +470,8 @@ public class AnimatedActor implements Disposable {
         boolean isDone = false;
         Interpolation interMode = Interpolation.linear;
         ShaderProgram shaderProgram;
+        int blendSrcFunction = GL20.GL_SRC_ALPHA;
+        int blendDstFunction = GL20.GL_ONE_MINUS_SRC_ALPHA;
         Consumer<ShaderProgram> preRenderAction;
 
         void update() {
@@ -514,6 +517,7 @@ public class AnimatedActor implements Disposable {
                         preRenderAction.accept(shaderProgram);
                     }
                 }
+                sb.setBlendFunction(blendSrcFunction, blendDstFunction);
                 sb.draw(AnimatedActor.this.spriteSheets.get(spriteSheetId),
                         xPosition + (AnimatedActor.this.flipX ? -1.0F : 1.0F) * currFrame.xPosition * AnimatedActor.this.scale * Settings.scale - currFrame.xPivot,
                         yPosition - (AnimatedActor.this.flipY ? -1.0F : 1.0F) * currFrame.yPosition * AnimatedActor.this.scale * Settings.scale - (currFrame.height - currFrame.yPivot),
@@ -533,6 +537,7 @@ public class AnimatedActor implements Disposable {
                 if (shaderProgram != null) {
                     sb.setShader(currShader);
                 }
+                sb.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
             }
         }
 
@@ -566,6 +571,14 @@ public class AnimatedActor implements Disposable {
 
         public void setShaderProgram(ShaderProgram shaderProgram) {
             this.shaderProgram = shaderProgram;
+        }
+
+        public void setBlendSrcFunction(int blendSrcFunction) {
+            this.blendSrcFunction = blendSrcFunction;
+        }
+
+        public void setBlendDstFunction(int blendDstFunction) {
+            this.blendDstFunction = blendDstFunction;
         }
 
         public void setPreRenderAction(Consumer<ShaderProgram> preRenderAction) {
